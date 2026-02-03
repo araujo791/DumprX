@@ -37,12 +37,12 @@ sleep 1
 
 if [[ "$OSTYPE" == "linux-gnu" ]]; then
 
-if command -v apt > /dev/null 2>&1; then
+    if command -v apt > /dev/null 2>&1; then
 
         echo -e ${PURPLE}"Ubuntu/Debian Based Distro Detected"${NORMAL}
         sleep 1
         echo -e ${BLUE}">> Enabling Universe/Multiverse Repos..."${NORMAL}
-        # Garante que os repositórios common estão ativos
+        sudo apt -y install software-properties-common
         sudo add-apt-repository -y universe
         sudo add-apt-repository -y multiverse
 
@@ -50,28 +50,27 @@ if command -v apt > /dev/null 2>&1; then
         sudo apt -y update || abort "Setup Failed at Update!"
 
         echo -e ${BLUE}">> Installing Required Packages..."${NORMAL}
-        # Removemos o liblz4-tool e garantimos o lz4 e unrar-free (mais compatível)
-        sudo apt install -y unace unrar-free zip unzip p7zip-full p7zip-rar sharutils uudeview mpack arj cabextract device-tree-compiler liblzma-dev python3-pip brotli lz4 axel gawk aria2 detox cpio rename liblz4-dev jq git-lfs || abort "Setup Failed at Install!"
+        # Incluído lz4 e erofs-utils para evitar falhas no dumper
+        sudo apt install -y unace unrar-free zip unzip p7zip-full p7zip-rar sharutils uudeview mpack arj cabextract \
+        device-tree-compiler liblzma-dev python3-pip brotli lz4 axel gawk aria2 detox cpio rename liblz4-dev \
+        jq git-lfs erofs-utils || abort "Setup Failed at Install!"
 
     elif command -v dnf > /dev/null 2>&1; then
 
         echo -e ${PURPLE}"Fedora Based Distro Detected"${NORMAL}
         sleep 1
-	    echo -e ${BLUE}">> Installing Required Packages..."${NORMAL}
-	    sleep 1
-
-	    # "dnf" automatically updates repos before installing packages
-        sudo apt install -y unace unrar zip unzip p7zip-full p7zip-rar sharutils rar uudeview mpack arj cabextract device-tree-compiler liblzma-dev python3-pip brotli lz4 axel gawk aria2 detox cpio rename liblz4-dev jq git-lfs || abort "Setup Failed!"
+        echo -e ${BLUE}">> Installing Required Packages..."${NORMAL}
+        sudo dnf install -y unace unrar zip unzip sharutils uudeview arj cabextract file-roller dtc python3-pip \
+        brotli axel aria2 detox cpio lz4 python3-devel xz-devel p7zip p7zip-plugins git-lfs erofs-utils || abort "Setup Failed!"
 
     elif command -v pacman > /dev/null 2>&1; then
 
         echo -e ${PURPLE}"Arch or Arch Based Distro Detected"${NORMAL}
         sleep 1
-	    echo -e ${BLUE}">> Installing Required Packages..."${NORMAL}
-	    sleep 1
-
+        echo -e ${BLUE}">> Installing Required Packages..."${NORMAL}
         sudo pacman -Syyu --needed --noconfirm >/dev/null || abort "Setup Failed!"
-        sudo pacman -Sy --noconfirm unace unrar p7zip sharutils uudeview arj cabextract file-roller dtc brotli axel gawk aria2 detox cpio lz4 jq git-lfs || abort "Setup Failed!"
+        sudo pacman -Sy --noconfirm unace unrar p7zip sharutils uudeview arj cabextract file-roller dtc \
+        brotli axel gawk aria2 detox cpio lz4 jq git-lfs erofs-utils || abort "Setup Failed!"
 
     fi
 
@@ -79,8 +78,7 @@ elif [[ "$OSTYPE" == "darwin"* ]]; then
 
     echo -e ${PURPLE}"macOS Detected"${NORMAL}
     sleep 1
-	echo -e ${BLUE}">> Installing Required Packages..."${NORMAL}
-	sleep 1
+    echo -e ${BLUE}">> Installing Required Packages..."${NORMAL}
     brew install protobuf xz brotli lz4 aria2 detox coreutils p7zip gawk git-lfs || abort "Setup Failed!"
 
 fi
@@ -90,10 +88,18 @@ sleep 1
 # Install `uv`
 echo -e ${BLUE}">> Installing uv for python packages..."${NORMAL}
 sleep 1
-bash -c "$(curl -sL https://astral.sh/uv/install.sh)" || abort "Setup Failed!"
+curl -sL https://astral.sh/uv/install.sh | sh || abort "Setup Failed!"
+
+# Atualiza o PATH imediatamente para esta sessão
+export PATH="$HOME/.local/bin:$PATH"
+
+# Garante que o uv/uvx esteja disponível no .bashrc para futuras sessões
+if ! grep -q ".local/bin" ~/.bashrc; then
+    echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
+fi
 
 # Done!
-echo -e ${GREEN}"Setup Complete!"${NORMAL}
+echo -e ${GREEN}"Setup Complete! Agora você pode rodar ./dumper.sh"${NORMAL}
 
 # Exit
 exit 0
