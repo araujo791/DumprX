@@ -37,17 +37,21 @@ sleep 1
 
 if [[ "$OSTYPE" == "linux-gnu" ]]; then
 
-    if command -v apt > /dev/null 2>&1; then
+if command -v apt > /dev/null 2>&1; then
 
         echo -e ${PURPLE}"Ubuntu/Debian Based Distro Detected"${NORMAL}
         sleep 1
+        echo -e ${BLUE}">> Enabling Universe/Multiverse Repos..."${NORMAL}
+        # Garante que os repositórios common estão ativos
+        sudo add-apt-repository -y universe
+        sudo add-apt-repository -y multiverse
+
         echo -e ${BLUE}">> Updating apt repos..."${NORMAL}
-        sleep 1
-	    sudo apt -y update || abort "Setup Failed!"
-	    sleep 1
-	    echo -e ${BLUE}">> Installing Required Packages..."${NORMAL}
-	    sleep 1
-        sudo apt install -y unace unrar zip unzip p7zip-full p7zip-rar sharutils rar uudeview mpack arj cabextract device-tree-compiler liblzma-dev python3-pip brotli liblz4-tool axel gawk aria2 detox cpio rename liblz4-dev jq git-lfs || abort "Setup Failed!"
+        sudo apt -y update || abort "Setup Failed at Update!"
+
+        echo -e ${BLUE}">> Installing Required Packages..."${NORMAL}
+        # Removemos o liblz4-tool e garantimos o lz4 e unrar-free (mais compatível)
+        sudo apt install -y unace unrar-free zip unzip p7zip-full p7zip-rar sharutils uudeview mpack arj cabextract device-tree-compiler liblzma-dev python3-pip brotli lz4 axel gawk aria2 detox cpio rename liblz4-dev jq git-lfs || abort "Setup Failed at Install!"
 
     elif command -v dnf > /dev/null 2>&1; then
 
@@ -57,7 +61,7 @@ if [[ "$OSTYPE" == "linux-gnu" ]]; then
 	    sleep 1
 
 	    # "dnf" automatically updates repos before installing packages
-        sudo dnf install -y unace unrar zip unzip sharutils uudeview arj cabextract file-roller dtc python3-pip brotli axel aria2 detox cpio lz4 python3-devel xz-devel p7zip p7zip-plugins git-lfs || abort "Setup Failed!"
+        sudo apt install -y unace unrar zip unzip p7zip-full p7zip-rar sharutils rar uudeview mpack arj cabextract device-tree-compiler liblzma-dev python3-pip brotli lz4 axel gawk aria2 detox cpio rename liblz4-dev jq git-lfs || abort "Setup Failed!"
 
     elif command -v pacman > /dev/null 2>&1; then
 
